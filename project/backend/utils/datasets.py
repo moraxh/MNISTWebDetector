@@ -1,6 +1,6 @@
 from torchvision import datasets, transforms
 
-DATA_PATH = "data/"
+DATA_PATH = "data"
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0.5, 0.5)])
 

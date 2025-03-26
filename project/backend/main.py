@@ -11,9 +11,11 @@ from utils.MLP import model
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='INFO', logger=logger, fmt='%(asctime)s [%(levelname)s] %(message)s', datefmt='%I:%M:%S %p', isatty=True)
 
+HOST = os.getenv("HOST", "localhost")
+
 MODEL_PATH = f"{DATA_PATH}/model.pt"
 MODEL_INFO_PATH = f"{DATA_PATH}/model.json"
-TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT = 8765
+TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT = 5001
 
 async def train_progress_websocket_handler(websocket):
     while True:
@@ -24,7 +26,7 @@ async def train_progress_websocket_handler(websocket):
 
 async def start_train_progress_websocket_server():
     # Web socket for training progress
-    start_train_progress_websocket_server = await websockets.serve(train_progress_websocket_handler, "localhost", TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT)
+    start_train_progress_websocket_server = await websockets.serve(train_progress_websocket_handler, HOST, TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT)
 
     logger.info(f"Training progress websocket server started on ws://localhost:{TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT}")
 

@@ -102,7 +102,7 @@ class MLP(nn.Module):
             logger.info(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
 
         self.is_model_trained = True
-        self.plot_loss()
+        # self.plot_loss()
     
     def get_training_progress(self):
         return {
@@ -140,7 +140,8 @@ class MLP(nn.Module):
 
     def load_trained_model(self, model_path, model_info_path):
         # Load the model
-        self.load_state_dict(torch.load(model_path))
+        map_location = torch.device('cpu') if not is_available() else torch.device('cuda')
+        self.load_state_dict(torch.load(model_path, map_location=map_location))
         self.eval()
         self.is_model_trained = True
 

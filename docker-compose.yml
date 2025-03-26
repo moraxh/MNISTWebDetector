@@ -8,3 +8,21 @@ services:
       - ./project/frontend:/app/frontend
       - /app/frontend/node_modules
     entrypoint: npm run dev -- --host 0.0.0.0 --port 3000
+  backend:
+    container_name: backend
+    build: 
+      context: ./project/backend
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./project/backend:/app/backend
+    entrypoint: python3 main.py
+    environment:
+      - HOST=backend
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

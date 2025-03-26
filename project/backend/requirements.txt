@@ -1,0 +1,5 @@
+coloredlogs==15.0.1
+matplotlib==3.9.4
+torch==2.6.0+cu118
+torchvision==0.21.0
+websockets==15.0.1
