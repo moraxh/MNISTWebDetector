@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>MNISTWebDetector</title>
+    <link rel="stylesheet" href="/src/style.css">
+  </head>
+  <body class="h-screen w-screen flex flex-col justify-start items-center p-10 gap-10">
+    <h1 class="text-8xl text-center font-black">MNIST Web Detector</h1>
+
+    <section class="flex flex-col gap-2">
+      <canvas width="500" height="500" oncontextmenu="return false" class="border-2 border-white shadow-white rounded-lg w-[500px] h-[500px] bg-black">
+      </canvas>
+      <div class="flex justify-between">
+        <small class="font-bold text-sm text-white/50">
+          You can also reset the canvas by right clicking.
+        </small>
+        <button id="clearBtn" class="ms-auto text-xl border-2 border-white rounded-full px-8 py-1 hover:bg-white/20 hover:cursor-pointer">
+          Clear
+        </button>
+      </div>
+    </section>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

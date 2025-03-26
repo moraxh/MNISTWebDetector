@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Titan+One&display=swap');
+
+html {
+  @apply bg-slate-950 text-white;
+  font-family: "Titan One", sans-serif;
+  font-style: normal;
+}
