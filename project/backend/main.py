@@ -18,15 +18,18 @@ MODEL_INFO_PATH = f"{DATA_PATH}/model.json"
 TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT = 5001
 
 async def train_progress_websocket_handler(websocket):
-    while True:
-        # Send the current epoch progress
-        progress = model.get_training_progress()
-        await websocket.send(json.dumps(progress))
-        await asyncio.sleep(1)  # Adjust the frequency of updates as needed
+    try:
+        while True:
+            # Send the current epoch progress
+            progress = model.get_training_progress()
+            await websocket.send(json.dumps(progress))
+            await asyncio.sleep(1)  # Adjust the frequency of updates as needed
+    except websockets.exceptions.ConnectionClosed:
+        logger.info("Training progress websocket connection closed")
 
 async def start_train_progress_websocket_server():
     # Web socket for training progress
-    start_train_progress_websocket_server = await websockets.serve(train_progress_websocket_handler, HOST, TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT)
+    start_train_progress_websocket_server = await websockets.serve(train_progress_websocket_handler, "0.0.0.0", TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT)
 
     logger.info(f"Training progress websocket server started on ws://localhost:{TRAIN_MODEL_PROGRESS_WEBSOCKET_PORT}")
 
