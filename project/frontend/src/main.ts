@@ -162,7 +162,7 @@ if (!ctx) {
 
 let lastX = 0
 let lastY = 0 
-let strokeWidth = 20
+let strokeWidth = 30
 let isDrawing = false
 let interpolation = 5
 

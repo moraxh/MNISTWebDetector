@@ -119,7 +119,10 @@ class MLP(nn.Module):
             if isinstance(X, list):
                 X = torch.tensor(X, dtype=torch.float32)
             if X.dim() == 1:
-                X = X.unsqueeze(0)
+                X = X.view(-1, 28, 28)
+            # Normalize
+            X = X / 255.0
+            X = (X - 0.5) / 0.5
             X = X.to(device)
             outputs = self(X)
             _, predicted = torch.max(outputs, 1)
