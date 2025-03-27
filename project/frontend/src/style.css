@@ -2,8 +2,28 @@
 @import "tailwindcss";
 
 html {
-  @apply bg-slate-950 text-white;
+  @apply bg-gradient-to-b from-[#161e27] from-0% to-black text-white;
   font-family: "Titan One", sans-serif;
   font-style: normal;
   font-weight: 400;
+}
+
+#modelTrainingModal {
+  @apply text-white;
+}
+
+#modelTrainingModal::backdrop {
+  @apply bg-black/70 backdrop-blur-md;
+}
+
+#modelTrainingProgress {
+  @apply w-[500px] max-w-[90%] h-2.5;
+}
+
+#modelTrainingProgress::-webkit-progress-bar {
+  @apply rounded-full overflow-hidden bg-zinc-900;
+}
+
+#modelTrainingProgress::-webkit-progress-value {
+  @apply bg-white;
 }

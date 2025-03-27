@@ -1,5 +1,5 @@
 const clearBtn = document.getElementById('clearBtn')
-const canvas = document.querySelector("canvas");
+const canvas = document.getElementById("drawingCanvas") as HTMLCanvasElement;
 
 if (!canvas) {
   throw new Error("Canvas not found");

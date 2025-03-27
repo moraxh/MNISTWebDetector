@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/chart.js": "^2.9.41",
     "typescript": "~5.7.2",
     "vite": "^6.2.0"
   },
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.16",
+    "chart.js": "4.4.8",
     "tailwindcss": "^4.0.16"
   }
 }

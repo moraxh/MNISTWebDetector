@@ -7,21 +7,42 @@
     <title>MNISTWebDetector</title>
     <link rel="stylesheet" href="/src/style.css">
   </head>
-  <body class="h-screen w-screen flex flex-col justify-start items-center p-10 gap-10">
-    <h1 class="text-8xl text-center">MNIST Web Detector</h1>
+  <body class="h-screen w-screen">
+    <main class="p-10 flex flex-col justify-start items-center gap-10">
+      <h1 class="text-8xl text-center">MNIST Web Detector</h1>
 
-    <section class="flex flex-col gap-2">
-      <canvas width="500" height="500" oncontextmenu="return false" class="border-2 border-white shadow-white rounded-lg w-[500px] h-[500px] bg-black">
-      </canvas>
-      <div class="flex justify-between">
-        <small class="text-sm text-white/50">
-          You can also reset the canvas by right clicking.
-        </small>
-        <button id="clearBtn" class="ms-auto text-xl border-2 border-white rounded-full px-8 py-1 hover:bg-white/20 hover:cursor-pointer">
-          Clear
-        </button>
+      <section class="flex flex-col gap-2">
+        <canvas id="drawingCanvas" width="500" height="500" oncontextmenu="return false" class="border-2 border-white shadow-white rounded-lg w-[500px] h-[500px] bg-black">
+        </canvas>
+        <div class="flex justify-between">
+          <small class="text-sm text-white/50">
+            You can also reset the canvas by right clicking.
+          </small>
+          <button id="clearBtn" class="ms-auto text-xl border-2 border-white rounded-full px-8 py-1 hover:bg-white/20 hover:cursor-pointer">
+            Clear
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="modelTrainingModal" class="bg-transparent fixed min-w-screen w-screen min-h-screen h-screen text-center py-28 p-10">
+      <div class="flex flex-col gap-12 m-auto">
+        <div class="flex flex-col gap-2">
+          <h2 class="text-6xl">The model is being trained</h2>
+          <p class="text-2xl text-white/50">Please wait until the training is finished.</p>
+        </div>
+
+        <div class="h-80 flex justify-center">
+          <canvas id="modelTrainingChart"></canvas>
+        </div>
+
+        <div class="flex flex-col gap-6 items-center justify-center w-full">
+          <p id="modelTrainingProgressText" class="text-7xl">50%</p>
+          <progress id="modelTrainingProgress" max="100" value="50"></progress>
+          <p id="modelTrainingETA" class="text-white/50"></p>
+        </div>
       </div>
-    </section>
+    </dialog>
 
     <script type="module" src="/src/main.ts"></script>
     <script type="module" src="/src/canvas.ts"></script>
