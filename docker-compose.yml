@@ -14,11 +14,15 @@ services:
       context: ./project/backend
     ports:
       - "5001:5001"
-    volumes:
-      - ./project/backend:/app/backend
+      - "5002:5002"
     entrypoint: python3 main.py
     environment:
       - HOST=backend
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./project/backend
+          target: /app/backend
     deploy:
       resources:
         reservations:

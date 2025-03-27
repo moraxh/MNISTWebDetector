@@ -37,14 +37,30 @@ const chart = new Chart(modelTrainingChart, {
   }
 })
 
+const predictImgWS = "ws://localhost:5002";
+const predictImgSocket = new WebSocket(predictImgWS);
+const predictionText = document.getElementById("predictionText") as HTMLParagraphElement;
+
+predictImgSocket.addEventListener("open", () => {
+    console.log("Connected to predict image websocket");
+})
+
+predictImgSocket.addEventListener("message", (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.prediction) {
+    predictionText.innerText = data.prediction; 
+  }
+})
+
+const predictImg = async (imageData: number[]) => {
+    predictImgSocket.send(JSON.stringify({ imageData: imageData }));
+}
+
 const trainingProgressWS = "http://localhost:5001";
 const trainingProgressSocket = new WebSocket(trainingProgressWS);
 
 const modelTrainingModal = document.getElementById("modelTrainingModal") as HTMLDialogElement;
-
-if (!modelTrainingModal) {
-  throw new Error("Model training modal not found");
-}
 
 trainingProgressSocket.addEventListener("open", () => {
     console.log("Connected to training progress websocket");
@@ -124,3 +140,104 @@ const updateETA = () => {
 
   modelTrainingETA.innerText = etaString;
 }
+
+// CANVAS
+
+const clearBtn = document.getElementById('clearBtn')
+const canvas = document.getElementById("drawingCanvas") as HTMLCanvasElement;
+
+if (!canvas) {
+  throw new Error("Canvas not found");
+}
+
+if (!clearBtn) {
+  throw new Error("Clear button not found");
+}
+
+const ctx = canvas.getContext('2d')
+
+if (!ctx) {
+  throw new Error("Canvas context not found");
+}
+
+let lastX = 0
+let lastY = 0 
+let strokeWidth = 20
+let isDrawing = false
+let interpolation = 5
+
+ctx.imageSmoothingEnabled = false
+ctx.strokeStyle = 'white'
+ctx.fillStyle = "white";
+
+const startDrawing = (e: MouseEvent) => {
+  if (e.button == 2 ) {
+    clearCanvas()
+  } else if (e.button == 0) {
+    isDrawing = true
+    ;[lastX, lastY] = [e.offsetX, e.offsetY]
+    draw(e)
+  }
+}
+
+const draw = (e: MouseEvent) => {
+  if (!isDrawing) return
+
+  const { offsetX, offsetY } = e
+
+  const dx = lastX - offsetX
+  const dy = lastY - offsetY
+
+  for (let i = 0; i < interpolation; i++) {
+    ctx.beginPath()
+    ctx.arc(lastX + (dx / interpolation) * i, lastY + (dy / interpolation) * i, strokeWidth, 0, 2 * Math.PI)
+    ctx.fill()
+  }
+  
+  ;[lastX, lastY] = [offsetX, offsetY]
+}
+
+const stopDrawing = () => {
+  isDrawing = false
+  const imageData = getImageDataInGrayscale()
+  predictImg(imageData)
+}
+
+const clearCanvas = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+}
+
+const getImageDataInGrayscale = (width: number = 28, height: number = 28) => {
+  // Get image
+  const dummyCanvas = document.createElement('canvas')
+  const dummyCtx = dummyCanvas.getContext('2d')
+  dummyCanvas.width = width
+  dummyCanvas.height = height
+  if (dummyCtx === null) {
+    throw new Error("Canvas context not found");
+  }
+  dummyCtx.fillStyle = "black"
+  dummyCtx.fillRect(0, 0, width, height)
+  dummyCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height)
+
+  const imageData = dummyCtx.getImageData(0, 0, width, height)
+
+  const grayscaleImageData = Array(width * height).fill(0)
+  // Convert to grayscale
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3
+    grayscaleImageData[i / 4] = avg
+  }
+  return grayscaleImageData
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  startDrawing(e)
+  canvas.addEventListener('mousemove', draw)
+})
+canvas.addEventListener('mouseup', () => {
+  stopDrawing()
+  canvas.removeEventListener('mousemove', draw)
+})
+canvas.addEventListener('mouseout', stopDrawing)
+clearBtn.addEventListener('click', clearCanvas)

@@ -21,7 +21,7 @@ html {
 }
 
 #modelTrainingProgress::-webkit-progress-bar {
-  @apply rounded-full overflow-hidden bg-zinc-900;
+  @apply rounded-full overflow-hidden bg-zinc-800;
 }
 
 #modelTrainingProgress::-webkit-progress-value {

@@ -23,7 +23,7 @@ if not os.path.exists(DATA_PATH):
 INPUT_SIZE = 28**2
 HIDDEN_SIZE = 256
 OUTPUT_SIZE = 10
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 
 # Dataset
 train_ds, test_ds = get_mnist()
@@ -116,6 +116,10 @@ class MLP(nn.Module):
     def predict(self, X):
         self.eval()
         with torch.no_grad():
+            if isinstance(X, list):
+                X = torch.tensor(X, dtype=torch.float32)
+            if X.dim() == 1:
+                X = X.unsqueeze(0)
             X = X.to(device)
             outputs = self(X)
             _, predicted = torch.max(outputs, 1)

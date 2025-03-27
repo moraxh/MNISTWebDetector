@@ -10,6 +10,10 @@
   <body class="h-screen w-screen">
     <main class="p-10 flex flex-col justify-start items-center gap-10">
       <h1 class="text-8xl text-center">MNIST Web Detector</h1>
+      <h2 class="text-5xl">
+        The prediction is
+        <span id="predictionText" class="text-5xl text-[rgb(75,192,192)]">?</span>
+      </h2>
 
       <section class="flex flex-col gap-2">
         <canvas id="drawingCanvas" width="500" height="500" oncontextmenu="return false" class="border-2 border-white shadow-white rounded-lg w-[500px] h-[500px] bg-black">
@@ -45,6 +49,5 @@
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>
-    <script type="module" src="/src/canvas.ts"></script>
   </body>
 </html>
