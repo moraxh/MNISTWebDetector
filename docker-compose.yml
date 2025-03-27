@@ -16,6 +16,8 @@ services:
       - "5001:5001"
       - "5002:5002"
     entrypoint: python3 main.py
+    volumes:
+      - ./project/backend:/app/backend
     environment:
       - HOST=backend
     develop:
