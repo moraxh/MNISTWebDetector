@@ -142,7 +142,6 @@ const updateETA = () => {
 }
 
 // CANVAS
-
 const clearBtn = document.getElementById('clearBtn')
 const canvas = document.getElementById("drawingCanvas") as HTMLCanvasElement;
 
@@ -162,13 +161,15 @@ if (!ctx) {
 
 let lastX = 0
 let lastY = 0 
-let strokeWidth = 30
+let strokeWidth = 25
 let isDrawing = false
 let interpolation = 5
 
 ctx.imageSmoothingEnabled = false
 ctx.strokeStyle = 'white'
 ctx.fillStyle = "white";
+
+let predictionTimer: any = null
 
 const startDrawing = (e: MouseEvent) => {
   if (e.button == 2 ) {
@@ -178,6 +179,17 @@ const startDrawing = (e: MouseEvent) => {
     ;[lastX, lastY] = [e.offsetX, e.offsetY]
     draw(e)
   }
+
+
+  if (predictionTimer) {
+    clearTimeout(predictionTimer)    
+  }
+
+  predictionTimer = setInterval(() => {
+    const imageData = getImageDataInGrayscale()
+    predictImg(imageData)
+    console.log("Predicting")
+  }, 200)
 }
 
 const draw = (e: MouseEvent) => {
@@ -199,12 +211,17 @@ const draw = (e: MouseEvent) => {
 
 const stopDrawing = () => {
   isDrawing = false
-  const imageData = getImageDataInGrayscale()
-  predictImg(imageData)
+  if (predictionTimer) {
+    clearInterval(predictionTimer)
+  }
 }
 
 const clearCanvas = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+  predictionText.innerText = "-"
+  if (predictionTimer) {
+    clearInterval(predictionTimer)
+  }
 }
 
 const getImageDataInGrayscale = (width: number = 28, height: number = 28) => {
