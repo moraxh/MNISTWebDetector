@@ -1,45 +1,8 @@
-import Chart from 'chart.js/auto';
-
-const modelTrainingChart = document.getElementById("modelTrainingChart") as HTMLCanvasElement;
-const modelTrainingProgress = document.getElementById("modelTrainingProgress") as HTMLProgressElement;
-const modelTrainingProgressText = document.getElementById("modelTrainingProgressText") as HTMLParagraphElement;
-const modelTrainingETA = document.getElementById("modelTrainingETA") as HTMLParagraphElement;
-
-const epochCompletionTimestamps: number[] = [];
-let eta = 0
-let etaTimer: any = null;
-
-const chart = new Chart(modelTrainingChart, {
-  type: 'line',
-  data: {
-    labels: [],
-    datasets: [{
-      type: 'line',
-      label: 'Training Loss',
-      data: [],
-      borderColor: 'rgb(75, 192, 192)',
-      tension: 0.1
-    }, {
-      type: 'line',
-      label: 'Validation Loss',
-      data: [],
-      borderColor: 'rgb(255, 99, 132)',
-      tension: 0.1
-    }]
-  },
-  options: {
-    backgroundColor: 'rgba(0, 0, 0, 0)',
-    scales: {
-      y: {
-        beginAtZero: true
-      }
-    }
-  }
-})
+import "./chartManager";
 
 const predictImgWS = "ws://localhost:5002";
 const predictImgSocket = new WebSocket(predictImgWS);
-const predictionText = document.getElementById("predictionText") as HTMLParagraphElement;
+const predictionText = document.getElementById("predictionText") as HTMLParagraphElement
 
 predictImgSocket.addEventListener("open", () => {
     console.log("Connected to predict image websocket");
@@ -53,208 +16,126 @@ predictImgSocket.addEventListener("message", (event) => {
   }
 })
 
+class DrawingBoardManager {
+  canvas: HTMLCanvasElement
+  ctx: CanvasRenderingContext2D
+  lastX = 0
+  lastY = 0 
+  strokeWidth = 25
+  isDrawing = false
+  interpolation = 5
+  predictionTimer: any = null;
+  predictCallback: ((imageData: number[]) => void) | null = null;
+
+  constructor(canvas: HTMLCanvasElement, predictionCallback?: (imageData: number[]) => void) {
+    if (!canvas) {
+      throw new Error("Canvas not found");
+    }
+
+    this.canvas = canvas
+    this.ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+
+    this.ctx.imageSmoothingEnabled = false
+    this.ctx.strokeStyle = 'white'
+    this.ctx.fillStyle = "white";
+
+    this.predictCallback = predictionCallback || null;
+
+    this.canvas.addEventListener('mousedown', (e) => {
+      this.startDrawing(e)
+      canvas.addEventListener('mousemove', this.draw.bind(this))
+    })
+    this.canvas.addEventListener('mouseup', () => {
+      this.stopDrawing()
+      canvas.removeEventListener('mousemove', this.draw.bind(this))
+    })
+    this.canvas.addEventListener('mouseout', this.stopDrawing)
+  }
+
+  startDrawing(e: MouseEvent) {
+    if (e.button == 2 ) {
+      this.clearCanvas()
+    } else if (e.button == 0) {
+      this.isDrawing = true
+      ;[this.lastX, this.lastY] = [e.offsetX, e.offsetY]
+      this.draw(e)
+
+      if (this.predictionTimer) {
+        clearInterval(this.predictionTimer);
+      }
+      this.predictionTimer = setInterval(() => {
+        const imageData = this.getImageDataInGrayscale();
+        if (this.predictCallback) {
+          this.predictCallback(imageData);
+        }
+      }, 200);
+    }
+  }
+
+  draw(e: MouseEvent) {
+    if (!this.isDrawing) return
+
+    const { offsetX, offsetY } = e
+
+    const dx = this.lastX - offsetX
+    const dy = this.lastY - offsetY
+
+    for (let i = 0; i < this.interpolation; i++) {
+      this.ctx.beginPath()
+      this.ctx.arc(this.lastX + (dx / this.interpolation) * i, this.lastY + (dy / this.interpolation) * i, this.strokeWidth, 0, 2 * Math.PI)
+      this.ctx.fill()
+    }
+    
+    ;[this.lastX, this.lastY] = [offsetX, offsetY]
+  }
+
+  stopDrawing() {
+    this.isDrawing = false
+    if (this.predictionTimer) {
+      clearInterval(this.predictionTimer);
+    }
+  }
+
+  clearCanvas() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    if (this.predictionTimer) {
+      clearInterval(this.predictionTimer);
+    }
+    predictionText.innerText = "-";
+  }
+
+  getImageDataInGrayscale(width: number = 28, height: number = 28) {
+    // Create the canvas reductor
+    const dummyCanvas = document.createElement('canvas') as HTMLCanvasElement
+    const dummyCtx = dummyCanvas.getContext('2d') as CanvasRenderingContext2D
+    dummyCanvas.width = width
+    dummyCanvas.height = height
+    dummyCtx.fillStyle = "black"
+    dummyCtx.fillRect(0, 0, width, height)
+
+    // Draw the image
+    dummyCtx.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, width, height)
+
+    // Get image
+    const imageData = dummyCtx.getImageData(0, 0, width, height)
+
+    // Convert to grayscale
+    const grayscaleImageData = Array(width * height).fill(0)
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3
+      grayscaleImageData[i / 4] = avg
+    }
+
+    return grayscaleImageData
+  }
+}
+
+const canvas = document.getElementById('drawingCanvas') as HTMLCanvasElement 
+const clearBtn = document.getElementById('clearBtn') as HTMLButtonElement
+
 const predictImg = async (imageData: number[]) => {
     predictImgSocket.send(JSON.stringify({ imageData: imageData }));
 }
 
-const trainingProgressWS = "http://localhost:5001";
-const trainingProgressSocket = new WebSocket(trainingProgressWS);
-
-const modelTrainingModal = document.getElementById("modelTrainingModal") as HTMLDialogElement;
-
-trainingProgressSocket.addEventListener("open", () => {
-    console.log("Connected to training progress websocket");
-})
-
-trainingProgressSocket.addEventListener("message", (event) => {
-    const data = JSON.parse(event.data);
-
-    if (data.is_model_trained) {
-      console.log("Model trained, closing websocket");
-      modelTrainingModal.close()
-      trainingProgressSocket.close();
-    } else {
-      if (!modelTrainingModal.open) {
-        modelTrainingModal.showModal()
-      }
-
-      // Load initial data
-      if (chart.data.labels?.length === 0) {
-        // Percentage
-        const percentage = data.current_epoch / data.total_epochs * 100;
-        modelTrainingProgress.value = percentage
-        modelTrainingProgressText.innerText = Math.round(percentage) + "%";
-
-        // Chart
-        chart.data.labels = Array.from(Array(data.current_epoch).keys()) as never[]
-        chart.data.datasets[0].data = data.train_loss
-        chart.data.datasets[1].data = data.val_loss
-        chart.update()
-      } else {
-        // Update data
-        if (data.current_epoch > Math.max(...(chart.data.labels as number[] || []))) {
-          epochCompletionTimestamps.push(performance.now())
-
-          // Percentage
-          const percentage = data.current_epoch / data.total_epochs * 100;
-          modelTrainingProgress.value = percentage
-          modelTrainingProgressText.innerText = Math.round(percentage) + "%";
-
-          // Chart
-          chart.data.labels?.push(data.current_epoch as never)
-          chart.data.datasets[0].data?.push(data.train_loss[data.current_epoch - 1] as never)
-          chart.data.datasets[1].data?.push(data.val_loss[data.current_epoch - 1] as never)
-          chart.update()
-
-          // ETA
-          if (epochCompletionTimestamps.length > 1) {
-            let differenceEpochTimes = epochCompletionTimestamps.map((timestamp, index) => timestamp - epochCompletionTimestamps[index - 1]);
-            differenceEpochTimes = differenceEpochTimes.filter(time => time > 0);
-
-            const sum = differenceEpochTimes.reduce((a, b) => a + b, 0);
-            const averageEpochTime = sum / differenceEpochTimes.length;
-
-            eta = (data.total_epochs - data.current_epoch) * averageEpochTime;
-
-            updateETA()
-          }
-        }
-      }
-    }
-})
-
-const updateETA = () => {
-  // Start Timer
-  if (!etaTimer) {
-    etaTimer = setInterval(() => {
-      eta -= 1000;
-      eta = Math.max(0, eta);
-      updateETA()
-    }, 1000)
-  }
-
-  const etaMinutes = Math.floor(eta / 60000);
-  const etaSecondsLeft = Math.floor((eta % 60000) / 1000);
-
-  const etaString = `ETA: ${etaMinutes}m ${etaSecondsLeft}s`;
-
-  modelTrainingETA.innerText = etaString;
-}
-
-// CANVAS
-const clearBtn = document.getElementById('clearBtn')
-const canvas = document.getElementById("drawingCanvas") as HTMLCanvasElement;
-
-if (!canvas) {
-  throw new Error("Canvas not found");
-}
-
-if (!clearBtn) {
-  throw new Error("Clear button not found");
-}
-
-const ctx = canvas.getContext('2d')
-
-if (!ctx) {
-  throw new Error("Canvas context not found");
-}
-
-let lastX = 0
-let lastY = 0 
-let strokeWidth = 25
-let isDrawing = false
-let interpolation = 5
-
-ctx.imageSmoothingEnabled = false
-ctx.strokeStyle = 'white'
-ctx.fillStyle = "white";
-
-let predictionTimer: any = null
-
-const startDrawing = (e: MouseEvent) => {
-  if (e.button == 2 ) {
-    clearCanvas()
-  } else if (e.button == 0) {
-    isDrawing = true
-    ;[lastX, lastY] = [e.offsetX, e.offsetY]
-    draw(e)
-  }
-
-
-  if (predictionTimer) {
-    clearTimeout(predictionTimer)    
-  }
-
-  predictionTimer = setInterval(() => {
-    const imageData = getImageDataInGrayscale()
-    predictImg(imageData)
-    console.log("Predicting")
-  }, 200)
-}
-
-const draw = (e: MouseEvent) => {
-  if (!isDrawing) return
-
-  const { offsetX, offsetY } = e
-
-  const dx = lastX - offsetX
-  const dy = lastY - offsetY
-
-  for (let i = 0; i < interpolation; i++) {
-    ctx.beginPath()
-    ctx.arc(lastX + (dx / interpolation) * i, lastY + (dy / interpolation) * i, strokeWidth, 0, 2 * Math.PI)
-    ctx.fill()
-  }
-  
-  ;[lastX, lastY] = [offsetX, offsetY]
-}
-
-const stopDrawing = () => {
-  isDrawing = false
-  if (predictionTimer) {
-    clearInterval(predictionTimer)
-  }
-}
-
-const clearCanvas = () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  predictionText.innerText = "-"
-  if (predictionTimer) {
-    clearInterval(predictionTimer)
-  }
-}
-
-const getImageDataInGrayscale = (width: number = 28, height: number = 28) => {
-  // Get image
-  const dummyCanvas = document.createElement('canvas')
-  const dummyCtx = dummyCanvas.getContext('2d')
-  dummyCanvas.width = width
-  dummyCanvas.height = height
-  if (dummyCtx === null) {
-    throw new Error("Canvas context not found");
-  }
-  dummyCtx.fillStyle = "black"
-  dummyCtx.fillRect(0, 0, width, height)
-  dummyCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height)
-
-  const imageData = dummyCtx.getImageData(0, 0, width, height)
-
-  const grayscaleImageData = Array(width * height).fill(0)
-  // Convert to grayscale
-  for (let i = 0; i < imageData.data.length; i += 4) {
-    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3
-    grayscaleImageData[i / 4] = avg
-  }
-  return grayscaleImageData
-}
-
-canvas.addEventListener('mousedown', (e) => {
-  startDrawing(e)
-  canvas.addEventListener('mousemove', draw)
-})
-canvas.addEventListener('mouseup', () => {
-  stopDrawing()
-  canvas.removeEventListener('mousemove', draw)
-})
-canvas.addEventListener('mouseout', stopDrawing)
-clearBtn.addEventListener('click', clearCanvas)
+const drawingBoardManager = new DrawingBoardManager(canvas, predictImg)
+clearBtn.addEventListener('click', drawingBoardManager.clearCanvas.bind(drawingBoardManager))

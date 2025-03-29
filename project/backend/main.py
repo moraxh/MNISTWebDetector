@@ -27,7 +27,7 @@ async def train_progress_websocket_handler(websocket):
             # Send the current epoch progress
             progress = model.get_training_progress()
             await websocket.send(json.dumps(progress))
-            await asyncio.sleep(1)  # Adjust the frequency of updates as needed
+            await asyncio.sleep(2)  # Adjust the frequency of updates as needed
     except websockets.exceptions.ConnectionClosed:
         logger.info("Training progress websocket connection closed")
 

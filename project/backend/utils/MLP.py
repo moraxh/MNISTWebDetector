@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 import coloredlogs
 import json
@@ -45,6 +46,7 @@ class MLP(nn.Module):
         self.dp = nn.Dropout(0.1)
         self.relu = nn.ReLU()
         self.history = {'train_loss': [], 'val_loss': []}
+        self.training_ETA = 0.0
         self.total_epochs = 0
         self.current_epoch = 0
         self.is_model_trained = False
@@ -61,9 +63,12 @@ class MLP(nn.Module):
         self.total_epochs = epochs
         loss_function = nn.CrossEntropyLoss()
 
+        training_epoch_duration = []
+
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
         for epoch in range(epochs):
+            start_time = time.time()
             self.current_epoch = epoch
             self.train()
             epoch_loss = 0.0
@@ -99,14 +104,18 @@ class MLP(nn.Module):
             val_loss = val_loss / len(test_loader)
             self.history['val_loss'].append(val_loss)
 
-            logger.info(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+            # Calculate elapsed time & ETA
+            elapsed_time = time.time() - start_time
+            training_epoch_duration.append(elapsed_time)
+            self.training_ETA = (sum(training_epoch_duration) / (epoch + 1)) * (epochs - epoch)
 
+            logger.info(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f} completed in {elapsed_time:.2f} seconds")
         self.is_model_trained = True
-        # self.plot_loss()
     
     def get_training_progress(self):
         return {
             'is_model_trained': self.is_model_trained,
+            'ETA': self.training_ETA,
             'current_epoch': self.current_epoch,
             'total_epochs': self.total_epochs,
             'train_loss': self.history['train_loss'],
