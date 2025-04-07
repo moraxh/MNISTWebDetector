@@ -22,9 +22,9 @@ if not os.path.exists(DATA_PATH):
 
 # Hyperparameters
 INPUT_SIZE = 28**2
-HIDDEN_SIZE = 256
+HIDDEN_SIZE = 128
 OUTPUT_SIZE = 10
-BATCH_SIZE = 128
+BATCH_SIZE = 256
 
 # Dataset
 train_ds, test_ds = get_mnist()
@@ -42,7 +42,8 @@ class MLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(MLP, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, output_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, output_size)
         self.dp = nn.Dropout(0.1)
         self.relu = nn.ReLU()
         self.history = {'train_loss': [], 'val_loss': []}
@@ -57,9 +58,11 @@ class MLP(nn.Module):
         x = self.relu(x)
         x = self.dp(x)
         x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)
         return x
 
-    def fit(self, train_loader=train_loader, test_loader=test_loader, epochs=50, learning_rate=0.01):
+    def fit(self, train_loader=train_loader, test_loader=test_loader, epochs=50, learning_rate=0.1):
         self.total_epochs = epochs
         loss_function = nn.CrossEntropyLoss()
 
