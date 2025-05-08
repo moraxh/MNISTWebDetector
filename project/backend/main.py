@@ -5,7 +5,9 @@ import logging
 import coloredlogs
 import json
 from utils.datasets import DATA_PATH
-from utils.MLP import model
+from utils.models import get_MLP, get_CNN
+
+model = get_CNN()
 
 # Configure coloredlogs
 logger = logging.getLogger(__name__)

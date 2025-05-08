@@ -20,8 +20,12 @@ class WebSocketManager {
     })
   }
 
-  sendPrediction(imageData: number[]) {
-    this.socket.send(JSON.stringify({ imageData }))
+  async sendPrediction(imageData: number[]) {
+    if (this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({ imageData }));
+    } else {
+      console.warn("WebSocket is not open. State:", this.socket.readyState);
+    }
   }
 }
 
