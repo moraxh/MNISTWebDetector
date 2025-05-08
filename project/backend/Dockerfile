@@ -9,4 +9,6 @@ EXPOSE 5002
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install watchdog
+
 COPY . .

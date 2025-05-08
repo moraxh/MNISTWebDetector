@@ -15,7 +15,7 @@ services:
     ports:
       - "5001:5001"
       - "5002:5002"
-    entrypoint: python3 main.py
+    entrypoint: ["watchmedo", "auto-restart", "--pattern=*.py", "--recursive", "--", "python", "main.py"]
     volumes:
       - ./project/backend:/app/backend
     environment:
